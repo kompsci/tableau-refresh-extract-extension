@@ -54,8 +54,12 @@ def handle_message():
 
 @socketio.on('run-action')
 def handle_my_custom_event(data):
-    print('Run Action: ' + str(data))
-    run_script_using_subprocess(data.query)
+    print('Run Action: ' + str(data) + '\n')
+    socketio.emit('push-message', f'Start Refresh')
+    main.embedded_start(data.query, socketio)
+
+
+
 
 def run_script_using_subprocess(data):
     result = subprocess.call(
