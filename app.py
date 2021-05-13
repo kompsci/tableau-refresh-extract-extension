@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import logging
-import os
 import subprocess
 import sys
 from flask import Flask, render_template, request, jsonify
@@ -10,7 +8,6 @@ sys.path.append("./refresh_extract")
 
 from refresh_extract import main
 
-
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"
 app.config["cmd"] = "python ./refresh_extract/main.py -c ./config/config-km.yaml -q 'movies'"
@@ -19,8 +16,8 @@ socketio = SocketIO(app,
                     ping_timeout=60000)
 
 
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+# log = logging.getLogger('werkzeug')
+# log.setLevel(logging.ERROR)
 
 
 @app.route('/')

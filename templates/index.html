@@ -57,7 +57,14 @@
 <script type="text/javascript" charset="utf-8">
     // init socket.io
 
-    let socket = io();
+    // Support TLS-specific URLs, when appropriate.
+    if (window.location.protocol == "https:") {
+      var ws_scheme = "wss://";
+    } else {
+      var ws_scheme = "ws://"
+    };
+
+    let socket = io(ws_scheme + location.host + "/");
 
     socket.on("connect", () => {
         $('#status').html('<span class="benton-small" style="background-color: lightgreen;">connected</span>');
