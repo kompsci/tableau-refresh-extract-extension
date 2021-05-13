@@ -112,14 +112,15 @@ def embedded_start(query_text, socketio):
     auditor.save_audit_records()
 
 
-def execute_refresh(rest_helper, config, query_text, socketio):
+def execute_refresh(rest_helper, config, query_text, socketio=None):
 
     TABLE_NAME = 'google_places'
 
     # get data
     MAIN_LOGGER.info(f'Refreshing Google Places Extract Based on Query: [{query_text}]...')
-    socketio.emit('push-message', f'Refreshing Extract Data Based on Query: [{query_text}]...', broadcast=True)
-    socketio.emit('push-message', f'Querying Google Places API...', broadcast=True)
+    if socketio:
+        socketio.emit('push-message', f'Refreshing Extract Data Based on Query: [{query_text}]...', broadcast=True)
+        socketio.emit('push-message', f'Querying Google Places API...', broadcast=True)
     extract_data_df = get_google_places_dataframe(config, query_text)
 
     target_datasource_name = config['target_datasource_name']
@@ -128,18 +129,21 @@ def execute_refresh(rest_helper, config, query_text, socketio):
     hyper_file_path = os.path.join(file_paths.DATA_STAGING_DIR,f'GooglePlacesData.hyper')
 
     hyper_helper = tableau_hyper_api_helper.TableauHyperAPIHelper.for_writing_to_output(hyper_file_path)
-    socketio.emit('push-message', f'Creating New Hyper File...', broadcast=True)
+    if socketio:
+        socketio.emit('push-message', f'Creating New Hyper File...', broadcast=True)
 
     hyper_helper.write_dataframe(extract_data_df,hyper_file_path, TABLE_NAME)
     success = rest_helper.publish_hyper(hyper_file_path, target_datasource_name, target_project_name)
-    socketio.emit('push-message', f'Published Datasource as "{target_datasource_name}"...', broadcast=True)
+    if socketio:
+        socketio.emit('push-message', f'Published Datasource as "{target_datasource_name}"...', broadcast=True)
 
     MAIN_LOGGER.info(f'Call to publish {target_datasource_name} datasource returned {success}')
 
 
     #rest_helper.get_flow_task_items()
     MAIN_LOGGER.info(f'Task Execution Completed')
-    socketio.emit('push-message', f'Task Execution Completed', broadcast=True)
+    if socketio:
+        socketio.emit('push-message', f'Task Execution Completed', broadcast=True)
 
 
 

@@ -36,6 +36,7 @@ function postQuery(queryText) {
   })
     .then((res) => {
       if (res.status == 200) {
+
         console.log('Run action successful...')
       }
     })

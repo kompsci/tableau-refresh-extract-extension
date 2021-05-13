@@ -38,8 +38,9 @@ def incoming():
     request_data = request.get_json()
     event = request_data['event_type']
     resource = request_data['resource_name']
-    print(event + resource)
-    socketio.emit('push-message', f'Webhook Event -> {event} | Resource "{resource}"', broadcast=True)
+    print(f'INCOMING: {event} | {resource}')
+    if (event == 'DatasourceCreated' and resource == 'GooglePlacesData'):
+        socketio.emit('refresh-data', f'Webhook {event} received \nResource "{resource}"', broadcast=True)
     resp = jsonify(success=True)
     return resp
 
