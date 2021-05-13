@@ -69,7 +69,13 @@
 
     socket.on('push-message', (msg) => {
         const item = document.createElement('li');
-        log(msg.data)
+        log(msg)
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    socket.on('refresh-data', (msg) => {
+        const item = document.createElement('li');
+        log(msg)
         window.scrollTo(0, document.body.scrollHeight);
     });
 

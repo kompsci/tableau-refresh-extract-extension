@@ -1,7 +1,10 @@
+let buttonName = 'Run Action';
+
 (function () {
   $(document).ready(function () {
 
     //let urlPrefix = window.urlPrefix;
+    let buttonName = $('#actionButton').text();
 
     //add button click event handler
     $('#actionButton').click(runAction);
@@ -20,7 +23,6 @@
 
 async function runAction() {
   console.log('running action...')
-    let buttonName = $('#actionButton').text();
 
   // Show spinner
   $('#actionButton').prop('disabled', true);
@@ -37,18 +39,25 @@ async function runAction() {
   let queryText = "";
   parameters = await fetchParameters(dashboard);
   for(let parameter of parameters) {
-    if (parameter.parameterName === 'Query') {
+    if (parameter.parameterName === 'query') {
       queryText = parameter.parameterValue
     }
   }
   console.log(`Query Text: ${queryText}`)
   // send query text
-   socket.emit('run-action', {data: queryText});
+   socket.emit('run-action', {query: queryText});
 
+}
+
+async function postAction() {
+  const { dashboard } = tableau.extensions.dashboardContent;
+
+  socket.emit('push-message', 'Refreshing Dashboard...');
+  await refreshData(dashboard);
+  socket.emit('push-message', 'All Done!');
 
   $('#actionButton').prop('disabled', false);
   $('#actionButton').text(buttonName);
-
 }
 
 async function fetchParameters(dashboard) {
@@ -66,5 +75,23 @@ async function fetchParameters(dashboard) {
   });
 
   return parameters;
+}
+
+async function refreshData(dashboard) {
+  // await dashboard.worksheets.find(w => w.name === "Map")
+  //   //     .getDataSourcesAsync()
+  //   //     .then(datasources =>  {
+  //   //       dataSource = datasources.find(datasource => datasource.name === "GooglePlacesData");
+  //   //       return dataSource.refreshAsync();
+  //   //       }
+  //   //     );
+
+  await dashboard.worksheets.find(w => w.name === "Data")
+      .getDataSourcesAsync()
+      .then(datasources =>  {
+        dataSource = datasources.find(datasource => datasource.name === "GooglePlacesData");
+        return dataSource.refreshAsync();
+        }
+      );
 }
 

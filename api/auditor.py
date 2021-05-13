@@ -9,7 +9,7 @@ from tableauserverclient import ServerResponseError
 
 from utils import utilities as utils
 from api.tableau_hyper_api_helper import TableauHyperAPIHelper
-from my_console_app import file_paths
+from refresh_extract import file_paths
 
 AUDIT_LOGGER = logging.getLogger('AUDIT')
 AUDIT_TABLE_NAME = 'Extract'

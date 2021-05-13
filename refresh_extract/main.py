@@ -1,7 +1,6 @@
 import argparse
 import os
 import time
-import uuid
 
 import yaml
 import logging
@@ -20,7 +19,7 @@ MAIN_LOGGER = logging.getLogger()
 def main():
 
     parser = argparse.ArgumentParser(description='Tableau Extract Refresher for Google Places.')
-    parser.add_argument('--config-file', '-c', required=False, default=f'{file_paths.CONFIG_DIR}/config.json',
+    parser.add_argument('--config-file', '-c', required=False, default=f'{file_paths.CONFIG_DIR}/config.yaml',
                         help='configuration file for application')
     parser.add_argument('--server', '-s', required=False, help='Tableau Server Host URL')
     parser.add_argument('--site', '-t', required=False, help='Tableau Site ID')
@@ -28,8 +27,7 @@ def main():
     parser.add_argument('--password', '-p', required=False, help='Tableau Password')
     parser.add_argument('--access-token', '-x', required=False, help='Tableau Personal Access Token Id')
     parser.add_argument('--token-secret', '-y', required=False, help='Tableau Token Secret')
-    parser.add_argument('--logging-level', '-ll', choices=['debug', 'info', 'error'], help='Desired logging level')
-    parser.add_argument('--query-text', '-q', default='bars', help='Google Places Query')
+    parser.add_argument('--query-text', '-q', help='Google Places Query')
     args = parser.parse_args()
 
     # Read configuration file
@@ -43,7 +41,6 @@ def main():
 
 
     # check directories and create if not present
-    utils.check_and_create_dir(file_paths.HYPER_TMP_DIR)
     utils.check_and_create_dir(file_paths.DATA_DIR)
     utils.check_and_create_dir(file_paths.LOG_DIR)
     utils.check_and_create_dir(file_paths.DATA_STAGING_DIR)
@@ -55,9 +52,8 @@ def main():
     # clean Data Staging directory
     utils.clean_directory(file_paths.DATA_STAGING_DIR)
 
-
     # logging
-    console_logging_level = args.logging_level if args.logging_level else config["logging_level"]
+    console_logging_level = config["logging_level"]
     if not console_logging_level:
         console_logging_level = "INFO"
     else:
@@ -67,7 +63,7 @@ def main():
     ## Create an instance for the Source side
     tab_rest_api_helper = initialize_rest_api_helper(config, 'tab_rest_1', console_logging_level)
 
-    execute_refresh(tab_rest_api_helper, config, args)
+    execute_refresh(tab_rest_api_helper, config, args.query_text)
 
     #send email
     #send_email(config)
@@ -77,14 +73,53 @@ def main():
     auditor.save_audit_records()
 
 
+def embedded_start(query_text, socketio):
+    # Read configuration file
 
-def execute_refresh(rest_helper, config, args):
+    with open(f'{file_paths.CONFIG_DIR}/config.yaml') as file:
+        config = yaml.load(file)
+
+    # check directories and create if not present
+    utils.check_and_create_dir(file_paths.DATA_DIR)
+    utils.check_and_create_dir(file_paths.LOG_DIR)
+    utils.check_and_create_dir(file_paths.DATA_STAGING_DIR)
+    utils.check_and_create_dir(file_paths.AUDIT_DIR)
+
+    # init auditor
+    auditor = audit.Auditor()
+
+    # clean Data Staging directory
+    utils.clean_directory(file_paths.DATA_STAGING_DIR)
+
+    # logging
+    console_logging_level = config["logging_level"]
+    if not console_logging_level:
+        console_logging_level = "INFO"
+    else:
+        console_logging_level = console_logging_level.upper()
+    setup_logging(f'{file_paths.LOG_DIR}/{file_paths.LOG_FILE_NAME}', console_logging_level)
+
+    ## Create an instance for the Source side
+    tab_rest_api_helper = initialize_rest_api_helper(config, 'tab_rest_1', console_logging_level)
+
+    execute_refresh(tab_rest_api_helper, config, query_text, socketio)
+
+    # send email
+    # send_email(config)
+
+    # Persist all audit records to hyper file
+    # Do not remove unless you don't want to save the audit results
+    auditor.save_audit_records()
+
+
+def execute_refresh(rest_helper, config, query_text, socketio):
 
     TABLE_NAME = 'google_places'
 
     # get data
-    query_text = args.query_text
     MAIN_LOGGER.info(f'Refreshing Google Places Extract Based on Query: [{query_text}]...')
+    socketio.emit('push-message', f'Refreshing Extract Data Based on Query: [{query_text}]...')
+    socketio.emit('push-message', f'Querying Google Places API...')
     extract_data_df = get_google_places_dataframe(config, query_text)
 
     target_datasource_name = config['target_datasource_name']
@@ -93,13 +128,19 @@ def execute_refresh(rest_helper, config, args):
     hyper_file_path = os.path.join(file_paths.DATA_STAGING_DIR,f'GooglePlacesData.hyper')
 
     hyper_helper = tableau_hyper_api_helper.TableauHyperAPIHelper.for_writing_to_output(hyper_file_path)
+    socketio.emit('push-message', f'Creating New Hyper File...')
+
     hyper_helper.write_dataframe(extract_data_df,hyper_file_path, TABLE_NAME)
     success = rest_helper.publish_hyper(hyper_file_path, target_datasource_name, target_project_name)
+    socketio.emit('push-message', f'Published Datasource as "{target_datasource_name}"...')
+
     MAIN_LOGGER.info(f'Call to publish {target_datasource_name} datasource returned {success}')
 
 
     #rest_helper.get_flow_task_items()
     MAIN_LOGGER.info(f'Task Execution Completed')
+    socketio.emit('push-message', f'Task Execution Completed')
+
 
 
 def get_google_places_dataframe(config, querytext):

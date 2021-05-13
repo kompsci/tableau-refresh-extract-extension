@@ -5,7 +5,7 @@ from datetime import datetime
 import pantab
 import tableauhyperapi
 import logging
-from my_console_app import file_paths
+from refresh_extract import file_paths
 
 HYPER_HELPER_LOGGER = logging.getLogger('TableauHyperAPIHelper')
 
