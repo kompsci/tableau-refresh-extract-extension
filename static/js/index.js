@@ -44,8 +44,28 @@ async function runAction() {
     }
   }
   console.log(`Query Text: ${queryText}`)
-  // send query text
-   socket.emit('run-action', {query: queryText});
+
+  // post query text
+  const urlPrefix = window.location.href.replace(/\/+$/, '');
+  const url = `${urlPrefix}/runAction`;
+  // post data
+  fetch(url, {
+    method: 'POST',
+    body: {"query" : queryText},
+    headers: {
+      'Content-type': 'application/json; charset=utf-8',
+    }
+  })
+    .then((res) => {
+      if (res.status == 200) {
+        console.log('Run action successful...')
+      }
+    })
+    .catch((error) => {
+      console.error('Error: ', error);
+      $('#actionButton').prop('disabled', false);
+      $('#actionButton').text(buttonName);
+    });
 
 }
 

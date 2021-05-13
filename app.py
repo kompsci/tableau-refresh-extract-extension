@@ -22,8 +22,8 @@ socketio = SocketIO(app,
 def index():
     return render_template('index.html')
 
-@app.route('/test', methods=['POST'])
-def test():
+@app.route('/runAction', methods=['POST'])
+def run():
     request_data = request.get_json()
     #run_script_using_subprocess(request_data["query"])
 
@@ -51,15 +51,6 @@ def handle_message():
 @socketio.on('disconnect')
 def handle_message():
     print('DISCONNECT EVENT')
-
-@socketio.on('run-action')
-def handle_my_custom_event(data):
-    print('Run Action: ' + str(data) + '\n')
-    socketio.emit('push-message', f'Start Refresh')
-    main.embedded_start(data.query, socketio)
-
-
-
 
 def run_script_using_subprocess(data):
     result = subprocess.call(
