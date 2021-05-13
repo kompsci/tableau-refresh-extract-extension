@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import logging
+
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 
@@ -11,14 +13,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/incoming', methods=['POST'])
 def incoming():
-    event = request.form['event_type']
-    resource = request.form['resource_name']
+    print('INCOMING EVENT')
+    request_data = request.get_json()
+    event = request_data['event_type']
+    resource = request_data['resource_name']
     print(event + resource)
     socketio.emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'}, broadcast=True)
     resp = jsonify(success=True)
