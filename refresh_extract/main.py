@@ -119,7 +119,7 @@ def execute_refresh(rest_helper, config, query_text, socketio=None):
     # get data
     MAIN_LOGGER.info(f'Refreshing Google Places Extract Based on Query: [{query_text}]...')
     if socketio:
-        socketio.emit('push-message', f'Refreshing Extract Data Based on Query: [{query_text}]...', broadcast=True)
+        socketio.emit('push-message', f'Refreshing Extract Data Based on <br/> Query: [{query_text}]...', broadcast=True)
         socketio.emit('push-message', f'Querying Google Places API...', broadcast=True)
     extract_data_df = get_google_places_dataframe(config, query_text)
 
@@ -135,7 +135,7 @@ def execute_refresh(rest_helper, config, query_text, socketio=None):
     hyper_helper.write_dataframe(extract_data_df,hyper_file_path, TABLE_NAME)
     success = rest_helper.publish_hyper(hyper_file_path, target_datasource_name, target_project_name)
     if socketio:
-        socketio.emit('push-message', f'Published Datasource as "{target_datasource_name}"...', broadcast=True)
+        socketio.emit('push-message', f'Published Datasource as <br/>"{target_datasource_name}"...', broadcast=True)
 
     MAIN_LOGGER.info(f'Call to publish {target_datasource_name} datasource returned {success}')
 
@@ -143,7 +143,7 @@ def execute_refresh(rest_helper, config, query_text, socketio=None):
     #rest_helper.get_flow_task_items()
     MAIN_LOGGER.info(f'Task Execution Completed')
     if socketio:
-        socketio.emit('push-message', f'Task Execution Completed', broadcast=True)
+        socketio.emit('push-message', f'Extract Task Completed', broadcast=True)
 
 
 

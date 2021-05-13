@@ -40,7 +40,7 @@ def incoming():
     resource = request_data['resource_name']
     print(f'INCOMING: {event} | {resource}')
     if (event == 'DatasourceCreated' and resource == 'GooglePlacesData'):
-        socketio.emit('refresh-data', f'Webhook {event} received \nResource "{resource}"', broadcast=True)
+        socketio.emit('refresh-data', f'Webhook {event} received <br/>Resource "{resource}"', broadcast=True)
     resp = jsonify(success=True)
     return resp
 
