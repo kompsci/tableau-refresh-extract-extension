@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
@@ -19,7 +19,10 @@ def index():
 def incoming():
     event = request.form['event_type']
     resource = request.form['resource_name']
-    emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'}, broadcast=True)
+    print(event + resource)
+    socketio.emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'}, broadcast=True)
+    resp = jsonify(success=True)
+    return resp
 
 @socketio.on('connect')
 def handle_message():
