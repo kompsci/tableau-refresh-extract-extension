@@ -23,7 +23,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/runAction', methods=['POST'])
-def run():
+def runAction():
     request_data = request.get_json()
     #run_script_using_subprocess(request_data["query"])
 

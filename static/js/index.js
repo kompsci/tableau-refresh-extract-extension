@@ -20,6 +20,31 @@ let buttonName = 'Run Action';
   });
 }());
 
+function postQuery(queryText) {
+
+  // post query text
+  const urlPrefix = window.location.href.replace(/\/+$/, '');
+  const url = `${urlPrefix}/runAction`;
+  payload = { "query": queryText };
+  // post data
+  fetch('runAction', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-type': 'application/json; charset=utf-8',
+    }
+  })
+    .then((res) => {
+      if (res.status == 200) {
+        console.log('Run action successful...')
+      }
+    })
+    .catch((error) => {
+      console.error('Error: ', error);
+      $('#actionButton').prop('disabled', false);
+      $('#actionButton').text(buttonName);
+    });
+}
 
 async function runAction() {
   console.log('running action...')
@@ -44,32 +69,12 @@ async function runAction() {
     }
   }
   console.log(`Query Text: ${queryText}`)
+  postQuery(queryText);
 
-  // post query text
-  const urlPrefix = window.location.href.replace(/\/+$/, '');
-  const url = `${urlPrefix}/runAction`;
-  // post data
-  fetch(url, {
-    method: 'POST',
-    body: {"query" : queryText},
-    headers: {
-      'Content-type': 'application/json; charset=utf-8',
-    }
-  })
-    .then((res) => {
-      if (res.status == 200) {
-        console.log('Run action successful...')
-      }
-    })
-    .catch((error) => {
-      console.error('Error: ', error);
-      $('#actionButton').prop('disabled', false);
-      $('#actionButton').text(buttonName);
-    });
 
 }
 
-async function postAction() {
+async function afterAction() {
   const { dashboard } = tableau.extensions.dashboardContent;
 
   socket.emit('push-message', 'Refreshing Dashboard...');
