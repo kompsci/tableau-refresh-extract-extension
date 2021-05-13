@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import os
 import subprocess
 import sys
@@ -16,6 +17,10 @@ app.config["cmd"] = "python ./refresh_extract/main.py -c ./config/config-km.yaml
 socketio = SocketIO(app,
                     cors_allowed_origins='*',
                     ping_timeout=60000)
+
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 @app.route('/')
