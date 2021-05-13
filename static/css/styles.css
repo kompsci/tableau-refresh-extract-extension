@@ -1,0 +1,45 @@
+/*custom app styles here*/
+
+@font-face {
+  font-family: 'Benton Sans';
+  src: url('../fonts/BentonSans-Regular.woff') format('woff'), url('../fonts/BentonSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Benton Sans';
+  src: url('../fonts/BentonSans-Bold.woff') format('woff'), url('../fonts/BentonSans-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+.benton {
+  font-family: "Benton Sans", Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  color: #000000;
+}
+
+.benton-small {
+  font-family: "Benton Sans", Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  color: #000000;
+}
+
+.tabbutton {
+  background-color: rgb(235, 235, 235);
+  color: rgb(102, 102, 102);
+  outline-color: rgb(102, 102, 102);
+  overflow: hidden;
+  font-family: "Benton Sans", Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.handle {
+  cursor: grab;
+}
+
+.tinted {
+  background-color: #fff6b2;
+}

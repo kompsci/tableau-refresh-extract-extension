@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
           integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"/>
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+
 
     <style>
         ul#console {
@@ -28,10 +30,17 @@
 
 </head>
 <body>
-
-<span style="font-size: 1.4em;">Tableau Thing</span>&nbsp;&nbsp;&nbsp;
-<span style="font-size: small;" id="status">connecting...</span>
-<ul id="console"></ul>
+<div class="row">
+    <div class="col-auto">
+      <button type="button" id="actionButton" class="btn btn-outline-dark tabbutton">Google It!</button>
+    </div>
+</div>
+<div class="row">
+    <div class="col-auto">
+        <span class="benton-small" id="status">connecting...</span>
+        <ul id="console"></ul>
+    </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
@@ -42,29 +51,31 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
         integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 
+<script src="{{ url_for('static', filename='js/tableau/tableau.extensions.1.latest.js') }}"></script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+
 <script type="text/javascript" charset="utf-8">
+    // init socket.io
+
     let socket = io();
-    const status = document.getElementById("status")
 
     socket.on("connect", () => {
-        socket.emit('client-event', 'Client Connected');
-        status.innerHTML = '<span style="background-color: lightgreen;">connected</span>'
+        $('#status').html('<span class="benton-small" style="background-color: lightgreen;">connected</span>');
     });
 
     socket.on("disconnect", () => {
-        status.innerHTML = '<span style="background-color: #ff8383;">disconnected</span>'
+        $('#status').html('<span class="benton-small" style="background-color: #ff8383;">disconnected</span>');
     })
 
     socket.on('push-message', (msg) => {
-        {#$('#status').text(msg.data)#}
         const item = document.createElement('li');
         log(msg.data)
         window.scrollTo(0, document.body.scrollHeight);
     });
 
     // adds entry to the html #console
-    function log(txt){
-      var newLine = document.createElement("li");
+    const log = (txt) => {
+      const newLine = document.createElement("li");
       newLine.innerHTML = (typeof txt === 'string') ? txt : JSON.stringify(txt, null, 4);
       document.querySelector('#console').appendChild(newLine);
     }

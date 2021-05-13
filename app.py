@@ -10,7 +10,8 @@ socketio = SocketIO(app, cors_allowed_origins='*')
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRE' \
+           'T_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 
@@ -37,9 +38,9 @@ def handle_message():
 def handle_message():
     print('DISCONNECT EVENT')
 
-@socketio.on('client-event')
+@socketio.on('run-action')
 def handle_my_custom_event(data):
-    print('Received Message: ' + str(data))
+    print('Run Action: ' + str(data))
 
 
 
