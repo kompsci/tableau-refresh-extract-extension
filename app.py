@@ -19,8 +19,8 @@ def index():
 def incoming():
     event = request.form['event_type']
     resource = request.form['resource_name']
-    emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'})
-    print(request.data)
+    print('REQUEST DATA: ' + request.data)
+    emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'}, broadcast=True)
 
 @socketio.on('connect')
 def handle_message():
