@@ -18,8 +18,8 @@
         ul#console {
           list-style-type: none;
           font-family: 'Roboto Mono', monospace;
-          font-size: 14px;
-          line-height: 25px;
+          font-size: 11px;
+          line-height: 20px;
           padding-left: 5px;
         }
         ul#console li {
@@ -34,14 +34,16 @@
     <div class="col-auto">
       <button type="button" id="actionButton" class="btn btn-outline-dark tabbutton">Google It!</button>
     </div>
-</div>
-<div class="row">
     <div class="col-auto">
-        <span class="benton-small" id="status">connecting...</span>
+        <span class="benton" id="status">Connecting...</span>
         <ul id="console"></ul>
     </div>
 </div>
-
+<div class="row">
+    <div class="col-auto">
+        <ul id="console"></ul>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
         crossorigin="anonymous"></script>
@@ -64,11 +66,11 @@
     let socket = io("/", "");
 
     socket.on("connect", () => {
-        $('#status').html('<span class="benton-small" style="background-color: lightgreen;">connected</span>');
+        $('#status').html('<span class="benton" style="background-color: #8ace7e;">Connected</span>');
     });
 
     socket.on("disconnect", () => {
-        $('#status').html('<span class="benton-small" style="background-color: #ff8383;">disconnected</span>');
+        $('#status').html('<span class="benton" style="background-color: #ff684c;">Disconnected</span>');
     })
 
     socket.on('push-message', (msg) => {

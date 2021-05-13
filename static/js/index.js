@@ -50,6 +50,9 @@ function postQuery(queryText) {
 async function runAction() {
   console.log('running action...')
 
+  //clear log
+  $('#console').html('');
+
   // Show spinner
   $('#actionButton').prop('disabled', true);
   $('#actionButton').html(
