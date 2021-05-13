@@ -27,10 +27,7 @@ def index():
 @app.route('/runAction', methods=['POST'])
 def runAction():
     request_data = request.get_json()
-    #run_script_using_subprocess(request_data["query"])
-
     main.embedded_start(request_data["query"], socketio)
-
     resp = jsonify(success=True)
     return resp
 
@@ -42,7 +39,7 @@ def incoming():
     event = request_data['event_type']
     resource = request_data['resource_name']
     print(event + resource)
-    socketio.emit('push-message', f'Webhook Event -> {event} | Resource "{resource}"')
+    socketio.emit('push-message', f'Webhook Event -> {event} | Resource "{resource}"', broadcast=True)
     resp = jsonify(success=True)
     return resp
 

@@ -77,9 +77,9 @@ async function runAction() {
 async function afterAction() {
   const { dashboard } = tableau.extensions.dashboardContent;
 
-  socket.emit('push-message', 'Refreshing Dashboard...');
+  log('Refreshing Dashboard...');
   await refreshData(dashboard);
-  socket.emit('push-message', 'All Done!');
+  log('All Done!');
 
   $('#actionButton').prop('disabled', false);
   $('#actionButton').text(buttonName);
