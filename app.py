@@ -60,5 +60,5 @@ def run_script_using_subprocess(data):
          ])
 
 
-if __name__ == '__main__':
-    socketio.run(app)
+# if __name__ == '__main__':
+#     socketio.run(app)

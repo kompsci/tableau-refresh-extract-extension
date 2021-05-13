@@ -61,7 +61,7 @@
 <script type="text/javascript" charset="utf-8">
     // init socket.io
 
-    let socket = io();
+    let socket = io("/", "");
 
     socket.on("connect", () => {
         $('#status').html('<span class="benton-small" style="background-color: lightgreen;">connected</span>');
