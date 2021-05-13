@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
@@ -15,20 +15,24 @@ socketio = SocketIO(app)
 def index():
     return render_template('index.html')
 
-@app.route('/incoming')
-def incoming(msg):
-    pass
-
+@app.route('/incoming', methods=['POST'])
+def incoming():
+    event = request.form['event_type']
+    resource = request.form['resource_name']
+    emit('push-message', {'data': f'Webhook Event -> {event} | Resource "{resource}"'})
+    print(request.data)
 
 @socketio.on('connect')
 def handle_message():
-    print('connected')
+    print('CONNECT EVENT')
 
-@socketio.on('client event')
-def handle_my_custom_event(json):
-    print('received json: ' + str(json))
-    emit('server data', {'data': 'Message From Server'})
-    emit('server data', {'data': 'Message From Server 2'})
+@socketio.on('disconnect')
+def handle_message():
+    print('DISCONNECT EVENT')
+
+@socketio.on('client-event')
+def handle_my_custom_event(data):
+    print('Received Message: ' + str(data))
 
 
 

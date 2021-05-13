@@ -13,10 +13,6 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
 
     <style>
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages > li { padding: 0.5rem 1rem; }
-        #messages > li:nth-child(odd) { background: #efefef; }
-
         ul#console {
           list-style-type: none;
           font-family: 'Roboto Mono', monospace;
@@ -37,10 +33,6 @@
 <span style="font-size: small;" id="status">connecting...</span>
 <ul id="console"></ul>
 
-<ul id="messages"></ul>
-
-
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
@@ -53,10 +45,9 @@
 <script type="text/javascript" charset="utf-8">
     let socket = io();
     const status = document.getElementById("status")
-    const messages = document.getElementById('messages');
 
     socket.on("connect", () => {
-        socket.emit('client event', {data: 'I\'m connected!'});
+        socket.emit('client-event', 'Client Connected');
         status.innerHTML = '<span style="background-color: lightgreen;">connected</span>'
     });
 
@@ -64,7 +55,7 @@
         status.innerHTML = '<span style="background-color: #ff8383;">disconnected</span>'
     })
 
-    socket.on('server data', (msg) => {
+    socket.on('push-message', (msg) => {
         {#$('#status').text(msg.data)#}
         const item = document.createElement('li');
         log(msg.data)
