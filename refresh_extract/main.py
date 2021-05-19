@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 
+import pantab
 import yaml
 import logging
 import sys
@@ -11,8 +12,7 @@ import pandas as pd
 sys.path.append(".")
 
 import file_paths
-from api import tableau_rest_api_helper, tableau_hyper_api_helper, auditor as audit
-from utils import utilities as utils, emailer
+from refresh_extract import tableau_rest_api_helper, utilities as utils
 
 MAIN_LOGGER = logging.getLogger()
 
@@ -27,13 +27,13 @@ def main():
     parser.add_argument('--password', '-p', required=False, help='Tableau Password')
     parser.add_argument('--access-token', '-x', required=False, help='Tableau Personal Access Token Id')
     parser.add_argument('--token-secret', '-y', required=False, help='Tableau Token Secret')
-    parser.add_argument('--query-text', '-q', help='Google Places Query')
+    parser.add_argument('--query-text', '-q', required=True, help='Google Places Search Query String')
     args = parser.parse_args()
 
     # Read configuration file
     try:
         with open(args.config_file) as file:
-            config = yaml.load(file)
+            config = yaml.load(file, Loader=yaml.FullLoader)
             # print(config)
     except Exception as e:
         print(file_paths.CONFIG_DIR)
@@ -44,10 +44,6 @@ def main():
     utils.check_and_create_dir(file_paths.DATA_DIR)
     utils.check_and_create_dir(file_paths.LOG_DIR)
     utils.check_and_create_dir(file_paths.DATA_STAGING_DIR)
-    utils.check_and_create_dir(file_paths.AUDIT_DIR)
-
-    # init auditor
-    auditor = audit.Auditor()
 
     # clean Data Staging directory
     utils.clean_directory(file_paths.DATA_STAGING_DIR)
@@ -65,13 +61,6 @@ def main():
 
     execute_refresh(tab_rest_api_helper, config, args.query_text)
 
-    #send email
-    #send_email(config)
-
-    # Persist all audit records to hyper file
-    # Do not remove unless you don't want to save the audit results
-    auditor.save_audit_records()
-
 
 def embedded_start(query_text, socketio):
     # Read configuration file
@@ -83,10 +72,6 @@ def embedded_start(query_text, socketio):
     utils.check_and_create_dir(file_paths.DATA_DIR)
     utils.check_and_create_dir(file_paths.LOG_DIR)
     utils.check_and_create_dir(file_paths.DATA_STAGING_DIR)
-    utils.check_and_create_dir(file_paths.AUDIT_DIR)
-
-    # init auditor
-    auditor = audit.Auditor()
 
     # clean Data Staging directory
     utils.clean_directory(file_paths.DATA_STAGING_DIR)
@@ -104,13 +89,6 @@ def embedded_start(query_text, socketio):
 
     execute_refresh(tab_rest_api_helper, config, query_text, socketio)
 
-    # send email
-    # send_email(config)
-
-    # Persist all audit records to hyper file
-    # Do not remove unless you don't want to save the audit results
-    auditor.save_audit_records()
-
 
 def execute_refresh(rest_helper, config, query_text, socketio=None):
 
@@ -123,24 +101,21 @@ def execute_refresh(rest_helper, config, query_text, socketio=None):
         socketio.emit('push-message', f'Querying Google Places API...', broadcast=True)
     extract_data_df = get_google_places_dataframe(config, query_text)
 
-    target_datasource_name = config['target_datasource_name']
-    target_project_name = config['target_project_name']
-
+   # create hyper extract and publish
     hyper_file_path = os.path.join(file_paths.DATA_STAGING_DIR,f'GooglePlacesData.hyper')
 
-    hyper_helper = tableau_hyper_api_helper.TableauHyperAPIHelper.for_writing_to_output(hyper_file_path)
     if socketio:
         socketio.emit('push-message', f'Creating New Hyper File...', broadcast=True)
+    pantab.frame_to_hyper(extract_data_df, hyper_file_path, table=TABLE_NAME, table_mode='a')
 
-    hyper_helper.write_dataframe(extract_data_df,hyper_file_path, TABLE_NAME)
+    target_datasource_name = config['target_datasource_name']
+    target_project_name = config['target_project_name']
     success = rest_helper.publish_hyper(hyper_file_path, target_datasource_name, target_project_name)
     if socketio:
         socketio.emit('push-message', f'Published Datasource as <br/>"{target_datasource_name}"...', broadcast=True)
 
     MAIN_LOGGER.info(f'Call to publish {target_datasource_name} datasource returned {success}')
 
-
-    #rest_helper.get_flow_task_items()
     MAIN_LOGGER.info(f'Task Execution Completed')
     if socketio:
         socketio.emit('push-message', f'Extract Task Completed', broadcast=True)
@@ -163,43 +138,6 @@ def get_google_places_dataframe(config, querytext):
     df['query_text'] = querytext
     extract_data_df = df.fillna(value={'opening_hours.open_now': False, 'permanently_closed': False, 'price_level' : 0.00})
     return extract_data_df
-
-
-def send_email(settings):
-    cc = []
-    attachments = []
-    subject = "Tableau Extract Refresh Results"
-
-    with open(file_paths.EMAIL_TEMPLATE, "r") as html_file:
-        html_text = html_file.read()
-
-    html_body = html_text.format("Tableau Extract Refresh",
-                           "My Team",
-                            utils.get_now_as_string(),
-                            "Tableau Team",
-                            "For Internal Purposes Only")
-
-    host = settings["smtp_host"]
-    port = settings["smtp_port"]
-    sender = settings["smtp_sender"]
-    recipients = settings["smtp_recipients"]
-
-    try:
-        host
-        port
-        sender
-    except:
-        MAIN_LOGGER.info('Unable to send email, missing SMTP HOST, PORT or SENDER')
-        return
-
-    ts_emailer = emailer.TSEmail(host, port, sender)
-    file_attachment = ts_emailer.format_attachment(f'{file_paths.LOG_DIR}/{file_paths.LOG_FILE_NAME}', "app.log")
-    attachments.append(file_attachment)
-
-    ts_emailer.send_email(subject,
-                          html_body,
-                          recipients,
-                          attachments=attachments)
 
 
 def initialize_rest_api_helper(cfg, instance_name, logging_level):
@@ -242,6 +180,8 @@ def initialize_rest_api_helper(cfg, instance_name, logging_level):
 
 
 def setup_logging(log_file_name, console_logging_level):
+    '''Configure console logging handler and file logging handler'''
+
     # create file handler
     fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # fh = RotatingFileHandler(log_file_name, maxBytes=8000000, backupCount=10)  # roll at ~8MB

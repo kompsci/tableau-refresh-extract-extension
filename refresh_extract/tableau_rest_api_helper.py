@@ -5,14 +5,12 @@ Manages state - initiates one REST API connection per instance of the class
 """
 import logging
 import os
-import shutil
-import time
 from http.client import HTTPConnection
 import tableauserverclient as TSC
 from tableauserverclient import ServerResponseError
 
-from utils import utilities as utils
-from . auditor import Auditor
+from refresh_extract import utilities as utils
+
 
 class TableauRestAPIHelper:
     """API Helper Class for the Tableau REST API via the Tableau Server Client library
@@ -71,12 +69,8 @@ class TableauRestAPIHelper:
         except:
             pass
 
-    #region ----Class Methods-----
 
-
-    #endregion
-
-    #region ----Non-Audited Methods-----
+    # region ----Public Methods-----
 
     def list_server_info(self):
         # Server info and methods
@@ -99,11 +93,6 @@ class TableauRestAPIHelper:
             self.logger.info(f"Project Name: {project.name} Project LUID: {project.id}")
 
 
-    #endregion
-
-    #region ----Audited Methods-----
-
-    @Auditor.audit_actions
     def download_datasource(self, datasource_name, download_dir, project_name=None, _include_extract=False, _cleanup_after=True):
         '''Downloads Tableau Published Datasource
 
@@ -137,16 +126,11 @@ class TableauRestAPIHelper:
         self.logger.info(f'Downloaded Datasource "{datasource_name}" to "{path_to_downloaded_file}')
 
 
-        # audits actions to Hyper File
-        auditor = Auditor()
-        action_type = 'Download Datasource'
+
         action_log = 'Downloaded Tableau Published Datasource File and Extracted TDS File'
-        action = auditor.create_datasource_audit_action(self.tsclient, self.site_content_url, datasource_item.id,
-                                                      path_to_downloaded_file, action_type, action_log)
 
-        return path_to_downloaded_file, action
+        return path_to_downloaded_file
 
-    @Auditor.audit_actions
     def publish_hyper(self, source_hyper_file_path, dest_datasource_name, dest_project_name, overwrite=True):
 
         '''Publish Single File Hyper as Datasource to Tableau Server
@@ -192,88 +176,19 @@ class TableauRestAPIHelper:
             self.logger.exception(e)
             return False
 
-        # audits actions to Hyper File
-        auditor = Auditor()
-        action_type = 'Publish Hyper File'
+
         action_msg = f'Published Hyper File as Datasource "{published_ds_item.name}" to Project "{dest_project_name}"'
-        action = auditor.create_datasource_audit_action(self.tsclient, self.site_content_url, published_ds_item.id,
-                                                        None, action_type, action_msg)
+
 
         self.logger.info(action_msg)
 
-        return True, action
+        return True
 
-    @Auditor.audit_actions
-    def run_flow(self, flow_name, project_name, flow_run_mode='full', wait_on_job_id=None):
-
-        '''Start a Prep Flow Run
-
-        Args:
-            flow_name (str): Prep Flow Name
-            project_name (str): Prep Flow Project Name
-            flow_run_mode (str): Flow Run Mode (can be 'full' or 'incremental')
-
-        Returns:
-            Job ID if the command is successful
-        '''
-
-        if wait_on_job_id:
-            success = self.__wait_on_job(wait_on_job_id)
-            if not success:
-                self.logger.info('Unable to execute Prep Flow. Precursor Job status is unavailable.')
-                return False
-
-        try:
-            # Get Project LUID
-            project_luid = self.__get_project_luid(project_name)
-        except LookupError as e:
-            self.logger.error(e)
-            return False
-
-        try:
-            # Get luid of the flow
-            flow_item = self.__get_flow_item(flow_name, project_name)
-            self.logger.info(f'Running Prep Flow : {flow_name}')
-        except LookupError as e:
-            self.logger.error(e)
-            return False
-
-        try:
-            job_item = self.tsclient.flows.run_now(flow_item, flow_run_mode)
-            self.logger.info(f'Running Prep Flow : {flow_name} | Job ID: {job_item.id} | Job Started At: {job_item.started_at}')
-        except ServerResponseError as e:
-            self.logger.error(utils.get_formatted_error('Unable to Run Prep Flow', e))
-            return False
-
-        # audits actions to Hyper File
-        auditor = Auditor()
-        action_type = 'Start Prep Flow Run'
-        action_msg = f'Started Prep Flow Run: Job {job_item.id} started at {job_item.started_at}'
-        action = auditor.create_flow_audit_action(self.tsclient, self.site_content_url, flow_item.id,
-                                                        None, action_type, action_msg)
-        self.logger.info(action_msg)
-        return job_item.id, action
 
     # endregion
 
     #region ----Private Class Methods-----
 
-
-    def __wait_on_job(self, job_id, wait_seconds=30):
-
-        try:
-            job_item = self.__get_job_item(job_id)
-            if job_item.completed_at is None:
-                self.logger.info(f'Job ID {job_id} is not completed. Progress is {job_item.progress}. Waiting {wait_seconds} seconds...')
-                time.sleep(wait_seconds)
-                return self.__wait_on_job(job_id)
-            else:
-                self.logger.info(f'Job ID {job_id} has COMPLETED at {job_item.completed_at}')
-                return True
-
-        except ServerResponseError as err:
-            self.logger.error(f"Unable to retrieve job information | {err.detail}")
-            return False
 
     def __set_secondary_logging(self, http_debug=False):
         tsc_logger = logging.getLogger('tableau')
