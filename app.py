@@ -31,11 +31,11 @@ def runAction():
 def incoming():
     print('INCOMING EVENT')
     request_data = request.get_json()
-    event = request_data['event_type']
-    resource = request_data['resource_name']
-    print(f'INCOMING: {event} | {resource}')
-    if (event == 'DatasourceCreated' and resource == 'GooglePlacesData'):
-        socketio.emit('refresh-data', f'Webhook {event} received <br/>Resource "{resource}"', broadcast=True)
+    event_type = request_data['event_type']
+    resource_name = request_data['resource_name']
+    print(f'INCOMING: {event_type} | {resource_name}')
+    if (event_type == 'DatasourceCreated' and resource_name == 'GooglePlacesData'):
+        socketio.emit('refresh-data', f'Webhook {event_type} received <br/>Resource "{resource_name}"', broadcast=True)
     resp = jsonify(success=True)
     return resp
 

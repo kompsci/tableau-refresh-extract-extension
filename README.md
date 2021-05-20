@@ -29,7 +29,7 @@ There are two primary components to this application:
 - [Tableau Extensions API](https://tableau.github.io/extensions-api/)
 - [Google Places API](https://developers.google.com/maps/documentation/places/web-service/overview)
 
-# Installation
+# Installation / Deployment
 
 1. After cloning the repository you will need to run this command. This will install all necessary dependencies.
   - ``pip install -r requirements.txt``
@@ -44,12 +44,17 @@ There are two primary components to this application:
    
 5. Open the Example Tableau Workbook in Tableau Desktop. 
   - Fix the Data source connection so it points to the `GooglePlacesData` on your Tableau Server
-  - Add the Extension to your Dashboard using the TREX File
+  - Add the Extension to your Dashboard using the TREX File (i.e. 'https://datadev-dashext.herokuapp.com/')
   - Note: You will need to allow the Extension URL in your Settings for the Tableau Server Site
 
 6. Publish the Tableau Workbook to your Tableau Server
    
-7. Test it out!
+7. Create a [Tableau Webhook](https://help.tableau.com/current/developer/webhooks/en-us/)
+    - Webhook for event type `DatasourceCreated`
+    - Webhook URL should hit the `/incoming` route on your web application. 
+    (i.e. 'https://datadev-dashext.herokuapp.com/incoming')
+
+8. Test it out!
 
 
 ## [Component 1] - refresh_extract utility
@@ -150,11 +155,25 @@ To use the TREX file to deploy the extension, you will want to update (at minimu
 
 More information on TREX files: [https://tableau.github.io/extensions-api/docs/trex_manifest.html](https://tableau.github.io/extensions-api/docs/trex_manifest.html)
 
+### Create a Webhook to Capture Datasource Events
+
+The dashboard extension web application has an `/incoming` route for capturing web hook events. This route checks to see if the incoming web
+hook event matches these values:
+* event_type == 'DatasourceCreated'
+* resource_name == 'GooglePlacesData'
+
+The extension knows *when* to refresh the data on the dashboard, based on when the webhook event is received. 
+
+You will need to register the webhook on your Tableau Server.
+
+- Webhook for event type `DatasourceCreated`
+- Webhook URL should hit the `/incoming` route on your web application (i.e. 'https://datadev-dashext.herokuapp.com/incoming')
+
+
 ## Authorship and Distribution
 
 Developed by Tableau Professional Services for DEMO PURPOSES ONLY
 
-----
 Katie Macpherson - [kmacpherson@tableau.com](mailto:kmacpherson@tableau.com)
 
 
