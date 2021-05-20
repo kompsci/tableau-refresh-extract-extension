@@ -10,14 +10,9 @@ from refresh_extract import main
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"
-app.config["cmd"] = "python ./refresh_extract/main.py -c ./config/config-km.yaml -q 'movies'"
 socketio = SocketIO(app,
                     cors_allowed_origins='*',
                     ping_timeout=60000)
-
-
-# log = logging.getLogger('werkzeug')
-# log.setLevel(logging.ERROR)
 
 
 @app.route('/')

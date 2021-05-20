@@ -1,0 +1,36 @@
+# Configuration File
+
+# AUTHENTICATION
+
+# Tableau Server URL (http or https)
+# IP address is also valid (i.e. http://10.1.3.2
+server_url: https://mytableauserver
+
+# Site Content URL -> for 'Default' site leave site_id blank
+site_id: mysite
+
+# Authentication Creds -> specify either username/password OR access_token_id/access_token_secret
+# if BOTH are specified then username/password will be used
+access_token_id: datadev-token
+access_token_secret: Uq6bGv3hdKeL1AqV+xV9A==:GrAHq9X7omB658IK6bwqjvteLxT2pC34
+username:
+password:
+
+# Tableau Server Datasource to Overwrite (will create if doesn't exist)
+target_datasource_name: GooglePlacesData
+
+# Target Project (must exist)
+target_project_name: DataDev
+
+# LOGGING SETTINGS
+# Console log settings can be changed here (options are debug, info, error)
+# Log messages also populate to log file (in logs directory) and the level for that file is always 'debug'
+logging_level: info
+
+# GOOGLE MAPS API KEY/SECRET
+# https://developers.google.com/maps/documentation/embed/get-api-key
+google_maps_api_key: my-google-maps-api-key
+google_maps_api_secret: AIzaRyA-xbMzM4H_mUWFAMsCHfKClduBc3n1AyA
+
+
+

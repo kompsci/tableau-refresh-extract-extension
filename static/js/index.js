@@ -1,4 +1,4 @@
-let buttonName = 'Run Action';
+let buttonName = 'Google It!';
 
 (function () {
   $(document).ready(function () {

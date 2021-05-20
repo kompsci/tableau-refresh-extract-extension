@@ -1,36 +1,64 @@
 # Tableau Refresh Extract Extension 
 
-## POC Only
+## Description
 
-The code in this repository was developed for Tableau DataDev Day 2021. 
+This is a Tableau Dashboard Extension that demonstrates the power of combining Tableau APIs to solve problems. This extension creates a Hyper Extract containing Google Places Data, publishes the fresh extract and refreshes the dashboard using that datasource, all with a click of a button. 
 
-https://www.tableau.com/DataDevDay
+For example, when the query text 'ice cream' is supplied, the Google Places API will return a list of places matching that search term and the new extract will contain only 'ice cream' places. 
 
-It is for demonstration purposes only. 
+In the screenshot below, the extension is shown on the right pane. 
 
-## DESCRIPTION
+![Dashboard Extension Example](files/dash-ext-example.png)
 
-Dashboard Extension + Utility that creates a Hyper Extract of Google Places Search Data. The extract is created based on the *query text* supplied. For example, when the query text 
-'ice cream' is supplied, the Google Places API will return a list of places matching that search term and the new extract will contain only 'ice cream' places. 
+There are two primary components to this application: 
 
-## REQUIREMENTS
+1. A Python command line utility that performs the refresh of the Hyper Extract using the Tableau Hyper API. 
+   - Data is obtained via a call out to the Google Places API
+   - The utility uses Tableau Server Client (TSC) to publish the fresh Hyper Extract back to the Tableau Server. 
+2. A Flask web application that serves as the Tableau Dashboard Extension. 
+   - Uses the Tableau Dashboard Extension API to 'get' the query text from the Tableau Dashboard parameter 
+   - Executes the refresh utility which creates a new extract and publishes the data source back to Tableau Server
+   - Uses Tableau Webhooks to call a refresh on the Tableau Dashboard once the extract is ready for use
+   - Uses SocketIO to receive updates in real time 
+
+## Requirements
 
 - Python 3.9+
 - [Tableau Server Client](https://github.com/tableau/server-client-python)
 - [Tableau Hyper API](https://help.tableau.com/current/api/hyper_api/en-us/docs/hyper_api_installing.html)
 - [Tableau Extensions API](https://tableau.github.io/extensions-api/)
+- [Google Places API](https://developers.google.com/maps/documentation/places/web-service/overview)
 
-## INSTALLATION
+# Installation
 
-After cloning the repository you will need to run this command:
+1. After cloning the repository you will need to run this command. This will install all necessary dependencies.
+  - ``pip install -r requirements.txt``
 
-``pip install -r requirements.txt``
+2. Create your configuration file and place in `config` directory (more info below)
+  - this will require Tableau Server credentials
+  - this will require a Google Places API Key
 
-This will install all necessary dependencies.
+3. Run the *refresh_extract* utility (manually via the command line) to create the `GooglePlacesData` data source
+   
+4. Deploy your Flask Web Application (Dashboard Extension)
+   
+5. Open the Example Tableau Workbook in Tableau Desktop. 
+  - Fix the Data source connection so it points to the `GooglePlacesData` on your Tableau Server
+  - Add the Extension to your Dashboard using the TREX File
+  - Note: You will need to allow the Extension URL in your Settings for the Tableau Server Site
 
-## HOW TO RUN THE SCRIPT
+6. Publish the Tableau Workbook to your Tableau Server
+   
+7. Test it out!
 
-The script should be executed on the command line, using the correct command line arguments and configuration file. 
+
+## [Component 1] - refresh_extract utility
+
+This is a python-based command line utility that performs the refresh of the Hyper Extract using the Tableau Hyper API. 
+
+The dashboard extension calls this utility directly via the `refresh_extract.main.embedded_start()` function. However, the utility can also be called via the command line. 
+
+Regardless of how this utility is executed, the configuration file must be in place. 
 
 ### Configuration File
 
@@ -43,7 +71,7 @@ The `config` directory contains a config-sample.yaml file that can be used as a 
 The path to the configuration file can also be specified via the command line argument `-c` if you would like to reference a file in the non-default location.
 
 ```shell
-python main.py -c ./config/myconfig.yaml ...
+python refresh_extract/main.py -c ./config/myconfig.yaml ...
 ```
 
 ### Command Line Arguments
@@ -51,136 +79,80 @@ python main.py -c ./config/myconfig.yaml ...
 Here is the usage printout for the script describing the command line arguments. 
 
 ```sh
-usage: main.py [-h] [--config-file CONFIG_FILE] --mode {export,import} [--csv-file-path CSV_FILE_PATH] [--user-auth-type {LOCAL,SAML,AD}] [--user-initial-password USER_INITIAL_PASSWORD]
-               [--logging-level {debug,info,error}]
+usage: main.py [-h] [--config-file CONFIG_FILE] [--server SERVER] [--site SITE] [--username USERNAME] [--password PASSWORD] [--access-token ACCESS_TOKEN] [--token-secret TOKEN_SECRET] --query-text QUERY_TEXT
 
-Tableau Add Users Utility
+Tableau Extract Refresher for Google Places.
 
 optional arguments:
   -h, --help            show this help message and exit
   --config-file CONFIG_FILE, -c CONFIG_FILE
                         configuration file for application
-  --mode {export,import}, -m {export,import}
-                        Script Mode
-  --csv-file-path CSV_FILE_PATH, -f CSV_FILE_PATH
-                        CSV File Path for Export or Import
-  --user-auth-type {LOCAL,SAML,AD}, -t {LOCAL,SAML,AD}
-                        Type of user being added (AD User, SAML User, Local User)
-  --user-initial-password USER_INITIAL_PASSWORD, -p USER_INITIAL_PASSWORD
-                        Initial Password for Local Auth Users
-  --logging-level {debug,info,error}, -ll {debug,info,error}
-                        Desired logging level
-
+  --server SERVER, -s SERVER
+                        Tableau Server Host URL
+  --site SITE, -t SITE  Tableau Site ID
+  --username USERNAME, -u USERNAME
+                        Tableau Username
+  --password PASSWORD, -p PASSWORD
+                        Tableau Password
+  --access-token ACCESS_TOKEN, -x ACCESS_TOKEN
+                        Tableau Personal Access Token Id
+  --token-secret TOKEN_SECRET, -y TOKEN_SECRET
+                        Tableau Token Secret
+  --query-text QUERY_TEXT, -q QUERY_TEXT
+                        Google Places Search Query String
 ```
 
 The following defaults for the command line arguments are in place:
 * Default Config File Path is `./config/config.yaml`
   * Use the `-c` argument to specify a different path
-* Default CSV File Path is `./data/userList.csv`
-    * Use the `-f` argument to specify a different path
 * Default Logging Level for the Console is set to INFO. 
   * Use the `-ll` argument to specify a different level
   * *Note:* Logging Level for the Log File (`./logs/app.log`) is set to DEBUG. This is not configurable via the command line.
-* Default User Auth Type is `LOCAL` (Local Auth)
-* Default Initial Password (for Local Auth Only) is `password123`
-
-
-### Note regarding the user-auth-type command line argument
-
-It is important to note that the `--user-auth-type` (`-t`) command line argument is important. This is used for *bulk adds/imports* of users only. It has no bearing on the export of users. 
-
-The User Auth Type should be set to one of 3 values:
-* `AD` - if adding a user from active directory
-* `SAML` - if adding a user that will authenticate via SAML
-* `LOCAL` - if adding a user that is purely local authentication
-  * The Initial Password for these users will be set to the value of the `--user_initial_password` (`-p`) argument
   
-## CSV FILE (INPUT/OUTPUT)
+### EXAMPLE - Executing the Refresh Extract script 
 
-Both the import and the export mode require a CSV File Path to be provided. Here are the specifics on the CSV File Schema. 
-
-### User List Export
-
-The User List will export with the following headers:
-
-* `email` - Should be the user's email address
-* `full_name` - Should be set to the user's full name
-* `username` - Should be set to the User's Username (for AD users do not include domain)
-* `site_role` - Should be set to one of these values:
-  * Creator 
-  * Explorer 
-  * ExplorerCanPublish 
-  * SiteAdministratorExplorer 
-  * SiteAdministratorCreator 
-  * Unlicensed
-  * Viewer
-
-### User List Import (Add User Action)
-
-The User List to import must contain the same CSV file headers as outlined above.
-
-### Example CSV
-
-```text
-email,full_name,username,site_role
-kmacpherson@tableau.com,Katie Macpherson,katiemacpherson,ServerAdministrator
-rstryker@tableau.com,Ryan Stryker,ryanstryker,ServerAdministrator
-```
-## EXAMPLE - Exporting the User List for a Tableau Site
-
-The command to execute a User List Export would look like:
+The command to refresh the Tableau Hyper File with new Google Places data based on query text is below.
 
 ```shell
-python main.py -m export -f ./data/exportList.csv -ll debug
-```
-In the above command we are specifying that the logging level should be set to DEBUG.
-
-In addition the *mode* `-m` of execution is set to 'export' and the file path to the CSV file containing
-the user list is specified by the `-f` argument.
-
-The configuration file is what defines which Tableau Server and Tableau Site to execute the action against. 
-
-## EXAMPLE - Adding Users to a Tableau Site (AD)
-
-The command to execute a User Add operation would look like:
-
-```shell
-python main.py -m import -t AD -f ./data/myListOfADUsers.csv -ll debug
+python refresh_extract/main.py -q "mexican food"
 ```
 In the above command we are specifying that the logging level should be set to DEBUG. 
 
-In addition the *mode* `-m` of execution is set to 'import' and the file path to the CSV file containing
-the import list is specified by the `-f` argument. 
-
-The type of user auth is specified as `AD` via the `-t` argument, meaning we are importing AD Users.
+In addition the *query text* `-q` is 'mexican food'. This means that the data contained in the hyper file should be a list of places matching that query text.   
 
 Remember that the configuration file is what defines which Tableau Server and Tableau Site to execute the action against. 
 
-## EXAMPLE - Adding Users to a Tableau Site (LOCAL)
+## [Component 2] - Flask Web Application (Dashboard Extension)
 
-The command to execute a User Add operation would look like:
+This is a Flask web application that serves as the Tableau Dashboard Extension.
 
-```shell
-python main.py -m import -t LOCAL -p changeme -f ./data/myListOfLocalUsers.csv -ll debug
-```
-In the above command we are specifying that the logging level should be set to DEBUG. 
+The flask web application entry point is `app.py`.
 
-In addition the *mode* `-m` of execution is set to 'import' and the file path to the CSV file containing
-the import list is specified by the `-f` argument. 
+The `gunicorn` WSGI HTTP Server can be used to serve the Flask application. 
 
-The type of user auth is specified as `LOCAL` via the `-t` argument, meaning we are importing Local Auth Users.
+Use the following command to start the web application:
 
-The initial password for the imported users will be set to `changeme` as specified by the `-p` argument
+`gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app`
 
-Remember that the configuration file is what defines which Tableau Server and Tableau Site to execute the action against. 
+### Heroku Deployment
+
+The dashboard extension web application must be deployed to a server accessible to your Tableau Server.
+
+The `Procfile` is in place in the event that you choose to deploy this dashboard extension to Heroku.  This file will be needed by your Heroku Deployment as it describes how to start your application once deployed.
+
+### Adding the Extension to a Tableau Dashboard
+
+The TREX file contained in this repository is a simple XML file that provides the information Tableau needs to deploy the Dashboard Extension web application. 
+
+An example file is contained here: [Tableau-DataDev-Extension.trex](files/Tableau-DataDev-Extension.trex)
+
+To use the TREX file to deploy the extension, you will want to update (at minimum) line 10 `<url>` to point to the deployment location of the Flask application. 
+
+More information on TREX files: [https://tableau.github.io/extensions-api/docs/trex_manifest.html](https://tableau.github.io/extensions-api/docs/trex_manifest.html)
 
 ## Authorship and Distribution
 
-Developed by Tableau Professional Services. 
-
-Please do not share or distribute this code beyond your organization. 
-
-If you have any questions please contact Tableau Professional Services or your Tableau Sales team. 
+Developed by Tableau Professional Services for DEMO PURPOSES ONLY
 
 ----
 Katie Macpherson - [kmacpherson@tableau.com](mailto:kmacpherson@tableau.com)
