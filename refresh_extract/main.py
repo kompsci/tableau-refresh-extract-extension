@@ -39,6 +39,13 @@ def main():
         print(file_paths.CONFIG_DIR)
         sys.exit("Program terminated - Configuration File Cannot Be Located")
 
+    #check for environment variables
+    for key, value in config.items():
+        if value is not None and '$' in value:
+            # use environment variable
+            env_var_name = value[1:]
+            print(f'Overriding {key} value with environment variable {env_var_name}...')
+            config[key] = os.environ[env_var_name]
 
     # check directories and create if not present
     utils.check_and_create_dir(file_paths.DATA_DIR)

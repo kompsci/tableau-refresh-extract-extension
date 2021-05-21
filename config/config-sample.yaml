@@ -30,7 +30,7 @@ logging_level: info
 # GOOGLE MAPS API KEY/SECRET
 # https://developers.google.com/maps/documentation/embed/get-api-key
 google_maps_api_key: my-google-maps-api-key
-google_maps_api_secret: AIzaRyA-xbMzM4H_mUWFAMsCHfKClduBc3n1AyA
+google_maps_api_secret: GENERATE_THIS_KEY_IN_YOUR_GOOGLE_CLOUD_CONSOLE
 
 
 

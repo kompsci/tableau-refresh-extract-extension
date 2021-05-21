@@ -79,6 +79,25 @@ The path to the configuration file can also be specified via the command line ar
 python refresh_extract/main.py -c ./config/myconfig.yaml ...
 ```
 
+### Handling API Secrets
+
+The refresh extract utility will accept environment variables in lieu of plain text secrets in the configuration file. Specified as follows:
+
+```yaml
+...
+access_token_id: $TABLEAU_ACCESS_TOKEN_ID
+access_token_secret: $TABLEAU_ACCESS_TOKEN_SECRET
+...
+  
+google_maps_api_key: $GOOGLE_MAPS_API_ID
+google_maps_api_secret: $GOOGLE_MAPS_API_SECRET
+```
+
+In the config.yaml snippet above the environment variable `$TABLEAU_ACCESS_TOKEN_ID` will be used to set the value of the configuration entity `access_token_id`. 
+
+Please note that the `$` character is just symbol that indicates the value is an environment variable rather than a literal value. 
+This means that you should use the same syntax (i.e. `$ENV_VAR_NAME`) whether in Windows or Linux. 
+
 ### Command Line Arguments
 
 Here is the usage printout for the script describing the command line arguments. 
