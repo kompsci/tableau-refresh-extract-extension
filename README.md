@@ -20,6 +20,9 @@ There are two primary components to this application:
    - Executes the refresh utility which creates a new extract and publishes the data source back to Tableau Server
    - Uses Tableau Webhooks to call a refresh on the Tableau Dashboard once the extract is ready for use
    - Uses SocketIO to receive updates in real time 
+    
+![Application Flow](files/application-flow.png)
+
 
 ## Requirements
 
@@ -79,24 +82,27 @@ The path to the configuration file can also be specified via the command line ar
 python refresh_extract/main.py -c ./config/myconfig.yaml ...
 ```
 
-### Handling API Secrets
+### Environment Variables Instead of a Configuration File
 
-The refresh extract utility will accept environment variables in lieu of plain text secrets in the configuration file. Specified as follows:
+If a configuration file cannot be located (or is not provided), the application will try to use environment variables to obtain the configuration values. 
 
-```yaml
-...
-access_token_id: $TABLEAU_ACCESS_TOKEN_ID
-access_token_secret: $TABLEAU_ACCESS_TOKEN_SECRET
-...
-  
-google_maps_api_key: $GOOGLE_MAPS_API_ID
-google_maps_api_secret: $GOOGLE_MAPS_API_SECRET
+Here are how the environment variables are set in the python code. 
+
+```python
+config['logging_level'] = 'INFO'
+config['server_url'] = os.getenv('TABLEAU_SERVER_URL')
+config['site_id'] = os.getenv('TABLEAU_SITE_ID')
+config['username'] = os.getenv('TABLEAU_USERNAME')
+config['password'] = os.getenv('TABLEAU_PASSWORD')
+config['access_token_id'] = os.getenv('TABLEAU_ACCESS_TOKEN_ID')
+config['access_token_secret'] = os.getenv('TABLEAU_ACCESS_TOKEN_SECRET')
+config['google_maps_api_key'] = os.getenv('GOOGLE_MAPS_API_ID')
+config['google_maps_api_secret'] = os.getenv('GOOGLE_MAPS_API_SECRET')
+config['target_datasource_name'] = os.getenv('TABLEAU_TARGET_DATASOURCE_NAME')
+config['target_project_name'] = os.getenv('TABLEAU_TARGET_PROJECT_NAME')
 ```
 
-In the config.yaml snippet above the environment variable `$TABLEAU_ACCESS_TOKEN_ID` will be used to set the value of the configuration entity `access_token_id`. 
-
-Please note that the `$` character is just symbol that indicates the value is an environment variable rather than a literal value. 
-This means that you should use the same syntax (i.e. `$ENV_VAR_NAME`) whether in Windows or Linux. 
+Therefore for deployments where environment variables would be a better fit for storing secrets and other information - set the above environment variables in your environment and ditch the configuration file. 
 
 ### Command Line Arguments
 
