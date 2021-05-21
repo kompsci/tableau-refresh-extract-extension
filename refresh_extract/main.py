@@ -31,34 +31,7 @@ def main():
     args = parser.parse_args()
 
     # Read configuration file
-    try_env_vars = False
-
-    try:
-        with open(args.config_file) as file:
-            config = yaml.load(file, Loader=yaml.FullLoader)
-            # print(config)
-    except Exception as e:
-        print(file_paths.CONFIG_DIR)
-        try_env_vars = True
-
-    if try_env_vars:
-        print('No configuration file, trying environment variables...')
-        config = {}
-        config['logging_level'] = 'INFO'
-        config['server_url'] = os.getenv('TABLEAU_SERVER_URL')
-        config['site_id'] = os.getenv('TABLEAU_SITE_ID')
-        config['username'] = os.getenv('TABLEAU_USERNAME')
-        config['password'] = os.getenv('TABLEAU_PASSWORD')
-        config['access_token_id'] = os.getenv('TABLEAU_ACCESS_TOKEN_ID')
-        config['access_token_secret'] = os.getenv('TABLEAU_ACCESS_TOKEN_SECRET')
-        config['google_maps_api_key'] = os.getenv('GOOGLE_MAPS_API_ID')
-        config['google_maps_api_secret'] = os.getenv('GOOGLE_MAPS_API_SECRET')
-        config['target_datasource_name'] = os.getenv('TABLEAU_TARGET_DATASOURCE_NAME')
-        config['target_project_name'] = os.getenv('TABLEAU_TARGET_PROJECT_NAME')
-
-
-    if not config['server_url']:
-        sys.exit("Program terminated - Configuration values could not be identified...")
+    config = init_config(args.config_file)
 
     # check directories and create if not present
     utils.check_and_create_dir(file_paths.DATA_DIR)
@@ -82,11 +55,44 @@ def main():
     execute_refresh(tab_rest_api_helper, config, args.query_text)
 
 
-def embedded_start(query_text, socketio):
-    # Read configuration file
+def init_config(config_file_path):
 
-    with open(f'{file_paths.CONFIG_DIR}/config.yaml') as file:
-        config = yaml.load(file)
+    try_env_vars = False
+
+    # try loading from config file first
+    try:
+        with open(config_file_path) as file:
+            config = yaml.load(file, Loader=yaml.FullLoader)
+    except Exception as e:
+        print(file_paths.CONFIG_DIR)
+        try_env_vars = True
+
+    # try loading from env vars second
+    if try_env_vars:
+        print('No configuration file, trying environment variables...')
+        config = {}
+        config['logging_level'] = 'INFO'
+        config['server_url'] = os.getenv('TABLEAU_SERVER_URL')
+        config['site_id'] = os.getenv('TABLEAU_SITE_ID')
+        config['username'] = os.getenv('TABLEAU_USERNAME')
+        config['password'] = os.getenv('TABLEAU_PASSWORD')
+        config['access_token_id'] = os.getenv('TABLEAU_ACCESS_TOKEN_ID')
+        config['access_token_secret'] = os.getenv('TABLEAU_ACCESS_TOKEN_SECRET')
+        config['google_maps_api_key'] = os.getenv('GOOGLE_MAPS_API_ID')
+        config['google_maps_api_secret'] = os.getenv('GOOGLE_MAPS_API_SECRET')
+        config['target_datasource_name'] = os.getenv('TABLEAU_TARGET_DATASOURCE_NAME')
+        config['target_project_name'] = os.getenv('TABLEAU_TARGET_PROJECT_NAME')
+
+    if not config['server_url']:
+        sys.exit("Program terminated - Configuration values could not be identified...")
+
+    return config
+
+
+def embedded_start(query_text, socketio):
+
+    # Read configuration file
+    config = init_config(f'{file_paths.CONFIG_DIR}/config.yaml')
 
     # check directories and create if not present
     utils.check_and_create_dir(file_paths.DATA_DIR)
