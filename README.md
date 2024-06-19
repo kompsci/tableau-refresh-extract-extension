@@ -199,6 +199,6 @@ You will need to register the webhook on your Tableau Server.
 
 Developed by Tableau Professional Services for DEMO PURPOSES ONLY
 
-Katie Macpherson - [kmacpherson@tableau.com](mailto:kmacpherson@tableau.com)
+Katie Collins - [katie.collins@salesforce.com](mailto:katie.collins@salesforce.com)
 
 
